@@ -1,0 +1,30 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# Hidden Gemini Brain/App Data Directories
+.gemini/
+
+# Python Virtual Environments
+.venv/
+.venv-1/
+venv/
+ENV/
+
+# Local/OS temporary files
+.DS_Store
+Thumbs.db
+*.log
+
+# Backup/Temp Folders
+backup/
+*.after
+*.before-*
+*.corrupted
+*.backup
+
+# Offline Scraped Sites / Justdial Files
+*Justdial*
+*justdial*
+Ss Magic Printers and Gifts in Guthi Road, Kurnool - Best T Shirt Printing Services in Kurnool - Justdial_files/
+Ss Magic Printers and Gifts in Guthi Road, Kurnool - Best T Shirt Printing Services in Kurnool - Justdial.html
