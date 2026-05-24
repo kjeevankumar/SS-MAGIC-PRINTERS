@@ -4713,4 +4713,87 @@ img {
     .modal-sim-rating {
         font-size: 0.7rem !important;
     }
+
+    /* 4. Compact Scrollable Order Form Modal for Mobile (Fix for cut-off buttons and tall layout) */
+    .order-modal-content {
+        max-height: 88vh !important;
+        width: calc(100% - 24px) !important;
+        max-width: 440px !important;
+        border-radius: 20px !important;
+        display: flex !important;
+        flex-direction: column !important;
+        overflow: hidden !important;
+        margin: auto !important;
+    }
+
+    .order-modal-header {
+        padding: 12px 16px !important;
+        background: #f8fafc !important;
+        border-bottom: 1px solid #e2e8f0 !important;
+    }
+
+    .order-modal-header h3 {
+        font-size: 1.1rem !important;
+    }
+
+    .order-modal-body {
+        padding: 12px 16px !important;
+        overflow-y: auto !important;
+        flex: 1 !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+
+    #order-form {
+        gap: 0.75rem !important;
+    }
+
+    .order-field {
+        gap: 0.25rem !important;
+    }
+
+    .order-field label {
+        font-size: 0.78rem !important;
+        font-weight: 700 !important;
+        color: var(--clr-blue) !important;
+    }
+
+    .order-field input, 
+    .order-field textarea {
+        padding: 8px 12px !important;
+        font-size: 0.85rem !important;
+        border-radius: 8px !important;
+    }
+
+    .order-grid {
+        gap: 0.75rem !important;
+    }
+
+    .custom-file-upload {
+        height: 38px !important;
+        border-radius: 8px !important;
+        padding: 0 12px !important;
+    }
+
+    .custom-file-upload span {
+        font-size: 0.8rem !important;
+    }
+
+    .whatsapp-submit-btn {
+        padding: 8px 12px !important;
+        font-size: 0.92rem !important;
+        border-radius: 10px !important;
+        margin-top: 0.25rem !important;
+        height: 40px !important;
+        gap: 6px !important;
+    }
+
+    .whatsapp-submit-btn i {
+        font-size: 1.1rem !important;
+    }
+
+    .order-disclaimer {
+        font-size: 0.7rem !important;
+        margin-top: 2px !important;
+        margin-bottom: 0 !important;
+    }
 }
