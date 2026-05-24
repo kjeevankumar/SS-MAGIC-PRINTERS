@@ -1,5 +1,7 @@
 # SS Magic Printers
 
+**Live Site:** [https://kjeevankumar.github.io/SS-MAGIC-PRINTERS/](https://kjeevankumar.github.io/SS-MAGIC-PRINTERS/)
+
 Welcome to the **SS Magic Printers** website repository! This is a modern, fast, and feature-rich static e-commerce website designed to showcase and sell custom printed gifts such as Photo Frames, Mugs, T-Shirts, Pillows, Clocks, and Keychains.
 
 ## ✨ Features
