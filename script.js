@@ -1954,11 +1954,12 @@ document.addEventListener('DOMContentLoaded', () => {
         card.addEventListener('click', () => {
             const title = card.querySelector('.minimal-title').textContent;
             const imgSrc = card.querySelector('.minimal-img').getAttribute('src');
+            const cardPrice = card.querySelector('.minimal-price')?.textContent || '₹499';
             
             let foundCategory = "Products";
             let foundItem = {
                 name: title,
-                price: '₹499',
+                price: cardPrice,
                 image: imgSrc
             };
             
