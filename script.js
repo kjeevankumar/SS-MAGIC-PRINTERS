@@ -130,6 +130,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const orderQtyInput = document.getElementById('order-qty');
     const orderNotesInput = document.getElementById('order-notes');
 
+    let selectedOrderFiles = [];
+
     function openOrderModal(productName) {
         if (orderProductInput) orderProductInput.value = productName;
         if (orderModal) orderModal.classList.add('show');
@@ -138,6 +140,10 @@ document.addEventListener('DOMContentLoaded', () => {
     function closeOrderModal() {
         if (orderModal) orderModal.classList.remove('show');
         if (orderForm) orderForm.reset();
+        selectedOrderFiles = [];
+        if (typeof updateOrderImagePreviews === 'function') {
+            updateOrderImagePreviews();
+        }
     }
 
     if (closeModalBtn) closeModalBtn.addEventListener('click', closeOrderModal);
@@ -176,11 +182,76 @@ document.addEventListener('DOMContentLoaded', () => {
     // Handle file name display in custom uploader
     const orderImageInput = document.getElementById('order-image');
     const fileNameDisplay = document.getElementById('file-name-display');
-    if (orderImageInput && fileNameDisplay) {
+    const orderImagePreview = document.getElementById('order-image-preview');
+
+    function updateOrderImagePreviews() {
+        if (!orderImagePreview) return;
+        orderImagePreview.innerHTML = '';
+
+        selectedOrderFiles.forEach((file, index) => {
+            const previewItem = document.createElement('div');
+            previewItem.className = 'order-preview-item';
+
+            const img = document.createElement('img');
+            img.alt = 'Preview';
+            
+            // Generate visual object URL for the image
+            const objectUrl = URL.createObjectURL(file);
+            img.src = objectUrl;
+            
+            // Clean up object URL when image loads to prevent memory leaks
+            img.onload = () => {
+                URL.revokeObjectURL(objectUrl);
+            };
+            
+            previewItem.appendChild(img);
+
+            const removeBtn = document.createElement('button');
+            removeBtn.type = 'button';
+            removeBtn.className = 'order-preview-remove';
+            removeBtn.innerHTML = '×';
+            removeBtn.setAttribute('aria-label', 'Remove image');
+            removeBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                selectedOrderFiles.splice(index, 1);
+                updateOrderImagePreviews();
+            });
+            previewItem.appendChild(removeBtn);
+
+            orderImagePreview.appendChild(previewItem);
+        });
+
+        if (fileNameDisplay) {
+            if (selectedOrderFiles.length === 0) {
+                fileNameDisplay.textContent = 'Choose Image...';
+                fileNameDisplay.style.color = '#64748b';
+            } else {
+                fileNameDisplay.textContent = 'Add another photo click again';
+                fileNameDisplay.style.color = 'var(--clr-brand-primary)';
+            }
+        }
+    }
+
+    if (orderImageInput) {
         orderImageInput.addEventListener('change', () => {
-            const fileName = orderImageInput.files[0]?.name || 'Choose Image...';
-            fileNameDisplay.textContent = fileName;
-            fileNameDisplay.style.color = orderImageInput.files[0] ? 'var(--clr-brand-primary)' : '#64748b';
+            if (orderImageInput.files) {
+                for (let i = 0; i < orderImageInput.files.length; i++) {
+                    selectedOrderFiles.push(orderImageInput.files[i]);
+                }
+                orderImageInput.value = ''; // Reset input value so same files can be re-uploaded
+                updateOrderImagePreviews();
+            }
+        });
+    }
+
+    // Limit phone input to exactly 10 digits and numbers only
+    if (orderPhoneInput) {
+        orderPhoneInput.addEventListener('input', () => {
+            let val = orderPhoneInput.value.replace(/\D/g, ''); // Remove non-digits
+            if (val.length > 10) {
+                val = val.substring(0, 10);
+            }
+            orderPhoneInput.value = val;
         });
     }
 
@@ -188,6 +259,13 @@ document.addEventListener('DOMContentLoaded', () => {
     if (orderForm) {
         orderForm.addEventListener('submit', async (e) => {
             e.preventDefault();
+
+            // Validate phone number
+            const phone = orderPhoneInput.value.trim();
+            if (phone.length !== 10) {
+                alert("Please enter a valid 10-digit phone number.");
+                return;
+            }
 
             // Track Order Initiation
             if (typeof fbq !== 'undefined') fbq('track', 'InitiateCheckout');
@@ -198,39 +276,44 @@ document.addEventListener('DOMContentLoaded', () => {
             
             const product = orderProductInput.value;
             const name = orderNameInput.value;
-            const phone = orderPhoneInput.value;
             const qty = orderQtyInput.value;
             const notes = orderNotesInput.value;
-            const hasFile = orderImageInput && orderImageInput.files && orderImageInput.files.length > 0;
+            const hasFiles = selectedOrderFiles.length > 0;
             
-            let photoUrl = null;
-            let fileName = '';
+            let photoUrls = [];
+            let fileNames = [];
 
-            // Step 1: Upload to Supabase if file exists
-            if (hasFile && supabase) {
+            // Step 1: Upload to Supabase if files exist
+            if (hasFiles && supabase) {
                 try {
                     submitBtn.disabled = true;
-                    submitBtn.innerHTML = '<i class="ph-bold ph-spinner ph-spin"></i> Uploading Photo...';
+                    submitBtn.innerHTML = `<i class="ph-bold ph-spinner ph-spin"></i> Uploading Photos (${selectedOrderFiles.length})...`;
                     
-                    const file = orderImageInput.files[0];
-                    fileName = file.name;
-                    const fileExt = fileName.split('.').pop();
-                    const filePath = `orders/${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+                    for (const file of selectedOrderFiles) {
+                        const name = file.name;
+                        fileNames.push(name);
+                        const fileExt = name.split('.').pop();
+                        const filePath = `orders/${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
 
-                    const { data, error } = await supabase.storage
-                        .from('customer-uploads') // Ensure this bucket is created in Supabase with Public access
-                        .upload(filePath, file);
+                        const { data, error } = await supabase.storage
+                            .from('customer-uploads') // Ensure this bucket is created in Supabase with Public access
+                            .upload(filePath, file);
 
-                    if (error) throw error;
+                        if (error) throw error;
 
-                    const { data: { publicUrl } } = supabase.storage
-                        .from('customer-uploads')
-                        .getPublicUrl(filePath);
-                    
-                    photoUrl = publicUrl;
+                        const { data: { publicUrl } } = supabase.storage
+                            .from('customer-uploads')
+                            .getPublicUrl(filePath);
+                        
+                        photoUrls.push(publicUrl);
+                    }
                 } catch (error) {
                     console.error("Upload failed:", error);
-                    // Continue with WhatsApp even if upload fails, just without the link
+                    // Continue with WhatsApp even if upload fails
+                }
+            } else if (hasFiles) {
+                for (const file of selectedOrderFiles) {
+                    fileNames.push(file.name);
                 }
             }
 
@@ -245,14 +328,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 waMessage += `📝 *Notes:* ${notes}\n`;
             }
 
-            if (photoUrl) {
-                waMessage += `\n📸 *Photo Link:* ${photoUrl}\n`;
-                waMessage += `✅ *Photo Uploaded:* The design is ready for download!`;
-            } else if (hasFile) {
-                waMessage += `\n🖼️ *Attached Photo:* ${fileName}\n`;
-                waMessage += `⚠️ *[ACTION REQUIRED]:* Please attach the photo above to this chat now!`;
+            if (photoUrls.length > 0) {
+                waMessage += `\n📸 *Photo Links (${photoUrls.length}):*\n`;
+                photoUrls.forEach((url, index) => {
+                    waMessage += `${index + 1}. ${url}\n`;
+                });
+                waMessage += `✅ *Photos Uploaded:* The designs are ready for download!`;
+            } else if (hasFiles) {
+                waMessage += `\n🖼️ *Attached Photos (${fileNames.length}):*\n`;
+                fileNames.forEach((filename, index) => {
+                    waMessage += `${index + 1}. ${filename}\n`;
+                });
+                waMessage += `⚠️ *[ACTION REQUIRED]:* Please attach these photos to this chat now!`;
             } else {
-                waMessage += `\n⚠️ *[NO PHOTO ATTACHED]*`;
+                waMessage += `\n⚠️ *[NO PHOTOS ATTACHED]*`;
             }
 
             waMessage += `\n\n--- \nPlease share payment and delivery details to confirm my order.`;
@@ -265,7 +354,6 @@ document.addEventListener('DOMContentLoaded', () => {
             submitBtn.disabled = false;
             submitBtn.innerHTML = originalBtnContent;
             closeOrderModal();
-            if (fileNameDisplay) fileNameDisplay.textContent = 'Choose Image...';
         });
     }
 
@@ -1915,36 +2003,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // ==========================================
-    // Review Product Click Navigation
+    // Review Product Click Navigation (Handled natively by HTML links)
     // ==========================================
-    document.querySelectorAll('.review-product-link').forEach(link => {
-        link.addEventListener('click', (e) => {
-            e.preventDefault();
-            const productName = link.getAttribute('data-product');
-            
-            let foundItem = {
-                name: productName,
-                price: '₹499',
-                image: 'processed_images/mug_var_1_1771776757614.png'
-            };
-            let foundCategory = "Products";
-            
-            if (catalogData && catalogData.length > 0) {
-                for (const cat of catalogData) {
-                    const match = cat.images.find(img => img.includes(productName.replace(/ /g, '_')) || productName.toLowerCase().includes(img.split('/').pop().split('_')[0].toLowerCase()));
-                    if (match) {
-                        foundCategory = cat.title;
-                        foundItem.image = match;
-                        break;
-                    }
-                }
-            }
-            
-            if (typeof window.openCatalogProductModal === 'function') {
-                window.openCatalogProductModal(foundCategory, foundItem);
-            }
-        });
-    });
+
 
     // ==========================================
     // Hero Section Product Navigation
